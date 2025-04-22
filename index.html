@@ -783,14 +783,24 @@
         }
     }
 
-    function nextCard() {
-        if (state.currentCardIndex < state.cards.length - 1) {
+function nextCard() {
+    if (state.currentCardIndex < state.cards.length - 1) {
+        // If the card is flipped, flip it back before transitioning
+        if (state.isFlipped) {
+            flashcard.classList.remove('flipped');
+            state.isFlipped = false;
+            setTimeout(() => {
+                state.currentCardIndex++;
+                updateCardDisplay();
+            }, 600); // Match the CSS animation duration (0.6s)
+        } else {
             state.currentCardIndex++;
             updateCardDisplay();
-        } else {
-            showNotification('You reached the end of the deck!');
         }
+    } else {
+        showNotification('You reached the end of the deck!');
     }
+}
 
     function restartDeck() {
         state.currentCardIndex = 0;
