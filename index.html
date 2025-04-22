@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glassmorphic Flash Cards</title>
+    <style>
+        :root {
+            --purple-dark: #2d1b4e;
+            --purple-medium: #5a3b8a;
+            --purple-light: #8a6bc1;
+            --accent: #d4b8ff;
+            --glass-bg: rgba(42, 23, 77, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--purple-dark), #120924);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-attachment: fixed;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(138, 107, 193, 0.1) 0%, rgba(45, 27, 78, 0) 70%);
+            z-index: -1;
+            animation: pulse-glow 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                opacity: 0.3;
+                transform: translate(-10%, -10%);
+            }
+            100% {
+                opacity: 0.6;
+                transform: translate(10%, 10%);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(212, 184, 255, 0.5);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .category-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .category-card {
+            background: rgba(90, 59, 138, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(90, 59, 138, 0.6);
+            border-color: var(--accent);
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(212, 184, 255, 0.1), transparent);
+            z-index: -1;
+        }
+
+        .category-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .btn {
+            background: var(--purple-medium);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--purple-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .flashcard-container {
+            width: 100%;
+            perspective: 1000px;
+            height: 300px;
+            margin-bottom: 2rem;
+            animation: fade-in 0.5s ease-out;
+            display: none;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: rgba(90, 59, 138, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background: rgba(138, 107, 193, 0.4);
+        }
+
+        .flashcard-content {
+            max-width: 100%;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            animation: fade-in 0.5s ease-out;
+            width: 100%;
+            justify-content: space-between;
+            display: none;
+            flex-wrap: wrap;
+        }
+
+        .controls .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            display: none;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .file-upload {
+            width: 100%;
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .file-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .file-input {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-input-label {
+            background: rgba(90, 59, 138, 0.4);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: rgba(90, 59, 138, 0.6);
+            border-color: var(--accent);
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            background: rgba(138, 107, 193, 0.3);
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-item button {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            transition: color 0.2s ease;
+        }
+
+        .file-item button:hover {
+            color: white;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-icon {
+            color: var(--accent);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: none;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            width: 100%;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 4px solid rgba(212, 184, 255, 0.3);
+            border-top: 4px solid var(--accent);
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .controls .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Glassmorphic Flash Cards</h1>
+        
+        <div class="glass-panel category-selector" id="categorySelector">
+            <h2>Select a Category</h2>
+            <div class="category-grid" id="categoryGrid">
+                <!-- Categories will be added here as links -->
+            </div>
+            
+            <div class="file-upload">
+                <div class="file-input-container">
+                    <input type="file" id="fileInput" class="file-input" accept=".json" multiple>
+                    <label for="fileInput" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Upload JSON Files</span>
+                        <p>or drag and drop files here</p>
+                    </label>
+                </div>
+                <div class="file-list" id="fileList"></div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading flashcards...</p>
+        </div>
+        
+        <div class="stats" id="stats">
+            <span id="cardCount">Card 0/0</span>
+            <span id="categoryName">Category: None</span>
+        </div>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-front">
+                    <div class="flashcard-content" id="cardFront">
+                        Click to start
+                    </div>
+                </div>
+                <div class="flashcard-back">
+                    <div class="flashcard-content" id="cardBack">
+                        Answer will appear here
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls" id="controls">
+            <button class="btn" id="prevBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+                Previous
+            </button>
+            <button class="btn" id="flipBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                </svg>
+                Flip Card
+            </button>
+            <button class="btn" id="nextBtn">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6"/>
+                </svg>
+            </button>
+            <button class="btn" id="restartBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 2v6h6"></path>
+                    <path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path>
+                    <path d="M21 22v-6h-6"></path>
+                    <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+                </svg>
+                Restart Deck
+            </button>
+        </div>
+        
+        <button class="btn" id="backBtn" style="margin-top: 1rem; display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"></path>
+                <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+            Back to Categories
+        </button>
+    </div>
+    
+    <div class="notification" id="notification">
+        <span class="notification-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </span>
+        <span id="notificationText">Notification message</span>
+    </div>
+
+ <script>
+    // State management
+    const state = {
+        // Predefined categories
+        categories: [
+            {
+                name: "Spanish Vocabulary",
+                description: "Basic Spanish vocabulary words",
+                filename: "spanish.json"
+            }
+        ],
+        currentCategoryName: null, // Store the name/title for display
+        currentCardIndex: 0,
+        cards: [],
+        isFlipped: false,
+        isLoading: false
+    };
+
+    // DOM Elements
+    const categorySelector = document.getElementById('categorySelector');
+    const categoryGrid = document.getElementById('categoryGrid');
+    const flashcardContainer = document.getElementById('flashcardContainer');
+    const flashcard = document.getElementById('flashcard');
+    const cardFront = document.getElementById('cardFront');
+    const cardBack = document.getElementById('cardBack');
+    const controls = document.getElementById('controls');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const flipBtn = document.getElementById('flipBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const backBtn = document.getElementById('backBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progress = document.getElementById('progress');
+    const stats = document.getElementById('stats');
+    const cardCount = document.getElementById('cardCount');
+    const categoryNameDisplay = document.getElementById('categoryName'); // Renamed for clarity
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notificationText');
+    const loading = document.getElementById('loading');
+
+    // --- Core Functions ---
+
+    // Initialize the app
+    function init() {
+        console.log("Initializing app...");
+        loadExistingFiles(); // Load files from localStorage first
+        renderCategories(); // Render categories including loaded ones
+        setupEventListeners();
+        processHashChange(); // Check URL hash on initial load
+        console.log("App Initialized.");
+    }
+
+    // Process URL Hash Change (handles navigation)
+    function processHashChange() {
+        const hash = window.location.hash;
+        console.log("Hash changed:", hash);
+        const categoryMatch = hash.match(/^#category=(.+)$/);
+
+        if (categoryMatch && categoryMatch[1]) {
+            const filename = decodeURIComponent(categoryMatch[1]);
+            console.log("Attempting to load category from hash:", filename);
+            loadCategory(filename);
+        } else {
+            console.log("No category in hash, showing category selector.");
+            showCategorySelector();
+        }
+    }
+
+    // Show only the category selector view
+    function showCategorySelector() {
+        categorySelector.style.display = 'flex';
+        flashcardContainer.style.display = 'none';
+        controls.style.display = 'none';
+        backBtn.style.display = 'none';
+        progressBar.style.display = 'none';
+        stats.style.display = 'none';
+        loading.style.display = 'none'; // Ensure loading is hidden
+        state.currentCategoryName = null;
+        state.cards = [];
+        state.currentCardIndex = 0;
+    }
+
+    // Show only the flashcard view
+    function showFlashcardUI(loadedCategoryName) {
+        categorySelector.style.display = 'none';
+        loading.style.display = 'none';
+        flashcardContainer.style.display = 'block';
+        controls.style.display = 'flex';
+        backBtn.style.display = 'block';
+        progressBar.style.display = 'block';
+        stats.style.display = 'flex';
+        state.currentCategoryName = loadedCategoryName; // Store the name
+        categoryNameDisplay.textContent = `Category: ${state.currentCategoryName || 'Unknown'}`; // Update display
+    }
+
+    // Show loading indicator
+    function showLoading(show) {
+        if (show) {
+            categorySelector.style.display = 'none';
+            flashcardContainer.style.display = 'none';
+            controls.style.display = 'none';
+            backBtn.style.display = 'none';
+            progressBar.style.display = 'none';
+            stats.style.display = 'none';
+            loading.style.display = 'flex';
+        } else {
+            loading.style.display = 'none';
+        }
+        state.isLoading = show;
+    }
+
+    // Render category cards in the grid
+    function renderCategories() {
+        categoryGrid.innerHTML = ''; // Clear existing cards
+        state.categories.forEach(category => {
+            const categoryCard = document.createElement('a');
+            categoryCard.className = 'category-card';
+            // Use hash for navigation, store filename in data attribute
+            categoryCard.href = `#category=${encodeURIComponent(category.filename)}`;
+            categoryCard.dataset.filename = category.filename;
+            categoryCard.innerHTML = `
+                <h3>${category.name}</h3>
+                <p>${category.description || 'No description'}</p>
+            `;
+            // No need for a separate click listener here, the 'a' tag handles hash change
+            categoryGrid.appendChild(categoryCard);
+        });
+        console.log("Categories rendered:", state.categories.length);
+    }
+
+    // Load category data (from localStorage or fetch)
+    async function loadCategory(filename) {
+        if (state.isLoading) return; // Prevent concurrent loads
+
+        console.log(`Loading category: ${filename}`);
+        showLoading(true);
+        let data;
+        let source = 'fetch'; // Assume fetching unless found in localStorage
+
+        try {
+            // 1. Check localStorage first (for uploaded files)
+            const storedData = localStorage.getItem(filename);
+            if (storedData) {
+                console.log(`Found ${filename} in localStorage.`);
+                data = JSON.parse(storedData);
+                source = 'localStorage';
+            } else {
+                // 2. If not in localStorage, try fetching (for predefined files)
+                console.log(`Fetching ${filename}...`);
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status} for ${filename}`);
+                }
+                data = await response.json();
+                console.log(`Fetched ${filename} successfully.`);
+            }
+
+            // 3. Validate and load cards
+            if (validateFlashcardData(data)) {
+                loadCards(data, filename); // Pass filename to derive category name if needed
+                showFlashcardUI(data.title || state.currentCategoryName); // Use title from JSON or stored name
+            } else {
+                throw new Error(`Invalid flashcard data format in ${filename}`);
+            }
+
+        } catch (error) {
+            console.error("Error loading category:", error);
+            showNotification(`Error loading ${filename}: ${error.message}`);
+            showCategorySelector(); // Go back to selection on error
+            window.location.hash = ''; // Clear invalid hash
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Load cards into state and update display
+    function loadCards(data, filename) {
+        state.cards = data.cards || [];
+        // Determine category name: use data.title, or find in state.categories, or use filename
+        const categoryInfo = state.categories.find(cat => cat.filename === filename);
+        const title = data.title || (categoryInfo ? categoryInfo.name : filename.replace('.json', ''));
+        state.currentCategoryName = title; // Update state
+
+        console.log(`Loaded ${state.cards.length} cards for category "${title}"`);
+        showNotification(`Loaded ${state.cards.length} cards for ${title}`);
+
+        // Reset view
+        state.currentCardIndex = 0;
+        state.isFlipped = false;
+        if (state.cards.length > 0) {
+            updateCardDisplay();
+        } else {
+            // Handle empty category
+            cardFront.textContent = 'No cards in this category';
+            cardBack.textContent = '';
+            cardCount.textContent = 'Card 0/0';
+            progress.style.width = '0%';
+            categoryNameDisplay.textContent = `Category: ${state.currentCategoryName}`;
+            // Disable navigation buttons if no cards
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            flipBtn.disabled = true;
+            restartBtn.disabled = true;
+        }
+    }
+
+    // Update the content of the visible flashcard
+    function updateCardDisplay() {
+        if (!state.cards || state.cards.length === 0 || state.currentCardIndex >= state.cards.length) {
+            console.warn("Attempted to update display with invalid state:", state);
+            // Optionally show an error or empty state
+             cardFront.textContent = 'Error: Card not found';
+             cardBack.textContent = '';
+            return;
+        }
+
+        const currentCard = state.cards[state.currentCardIndex];
+        cardFront.textContent = currentCard.front || '[No Front Text]';
+        cardBack.textContent = currentCard.back || '[No Back Text]';
+
+        // Reset flip state visually
+        flashcard.classList.remove('flipped');
+        state.isFlipped = false;
+
+        // Update progress bar and stats
+        const totalCards = state.cards.length;
+        const currentNumber = state.currentCardIndex + 1;
+        progress.style.width = `${(currentNumber / totalCards) * 100}%`;
+        cardCount.textContent = `Card ${currentNumber}/${totalCards}`;
+        categoryNameDisplay.textContent = `Category: ${state.currentCategoryName || 'Unknown'}`; // Ensure category name is updated
+
+        // Enable/disable buttons based on index
+        prevBtn.disabled = state.currentCardIndex === 0;
+        nextBtn.disabled = state.currentCardIndex === totalCards - 1;
+        flipBtn.disabled = false;
+        restartBtn.disabled = false;
+
+        console.log(`Displaying card ${currentNumber}/${totalCards}`);
+    }
+
+    // --- Card Actions ---
+
+    function prevCard() {
+        if (state.currentCardIndex > 0) {
+            state.currentCardIndex--;
+            updateCardDisplay();
+        } else {
+            showNotification('You are at the first card');
+        }
+    }
+
+    function nextCard() {
+        if (state.currentCardIndex < state.cards.length - 1) {
+            state.currentCardIndex++;
+            updateCardDisplay();
+        } else {
+            showNotification('You reached the end of the deck!');
+        }
+    }
+
+    function restartDeck() {
+        state.currentCardIndex = 0;
+        state.isFlipped = false;
+        updateCardDisplay();
+        showNotification('Deck restarted');
+    }
+
+    function flipCard() {
+        if (!state.cards || state.cards.length === 0) return; // Don't flip if no cards
+        state.isFlipped = !state.isFlipped;
+        flashcard.classList.toggle('flipped', state.isFlipped);
+    }
+
+    // Go back to category selection view
+    function backToCategories() {
+        console.log("Navigating back to categories.");
+        // Clear the hash to trigger the category view via hashchange listener
+        window.location.hash = '';
+        // Directly call showCategorySelector for immediate UI update
+        showCategorySelector();
+    }
+
+    // --- File Handling ---
+
+    function handleFileUpload(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        Array.from(files).forEach(file => {
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                showNotification(`Skipped non-JSON file: ${file.name}`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const fileContent = e.target.result;
+                    const data = JSON.parse(fileContent);
+
+                    if (validateFlashcardData(data)) {
+                        const filename = file.name;
+                        // Save to localStorage
+                        localStorage.setItem(filename, fileContent);
+
+                        // Add or update category in state.categories
+                        const existingCategoryIndex = state.categories.findIndex(cat => cat.filename === filename);
+                        const newCategoryInfo = {
+                            name: data.title || filename.replace('.json', ''),
+                            description: `${data.cards.length} cards (Uploaded)`,
+                            filename: filename
+                        };
+
+                        if (existingCategoryIndex > -1) {
+                            state.categories[existingCategoryIndex] = newCategoryInfo; // Update existing
+                        } else {
+                            state.categories.push(newCategoryInfo); // Add new
+                        }
+
+                        renderCategories(); // Re-render the category list
+                        addFileToList(filename); // Add to the visual file list UI
+                        showNotification(`Added/Updated ${data.cards.length} cards from ${filename}`);
+
+                    } else {
+                        showNotification(`Invalid JSON format in ${filename}`);
+                    }
+                } catch (err) {
+                    showNotification(`Error parsing ${file.name}: ${err.message}`);
+                    console.error(`Error parsing ${file.name}:`, err);
+                }
+            };
+            reader.onerror = () => {
+                showNotification(`Error reading file ${file.name}`);
+                console.error(`Error reading file ${file.name}:`, reader.error);
+            };
+            reader.readAsText(file);
+        });
+
+        // Clear the input value to allow re-uploading the same file
+        fileInput.value = null;
+    }
+
+    function validateFlashcardData(data) {
+        return data &&
+               typeof data === 'object' && // Ensure it's an object
+               // data.title && // Title is optional but good practice
+               // typeof data.title === 'string' &&
+               Array.isArray(data.cards) && // Must have a 'cards' array
+               data.cards.every(card =>
+                    typeof card === 'object' &&
+                    card.front && typeof card.front === 'string' && card.front.trim() !== '' && // Front must be non-empty string
+                    card.back && typeof card.back === 'string' && card.back.trim() !== ''   // Back must be non-empty string
+               );
+    }
+
+    function addFileToList(filename) {
+        // Check if it's already in the list
+        const existingItem = fileList.querySelector(`.file-item[data-filename="${encodeURIComponent(filename)}"]`);
+        if (existingItem) return; // Don't add duplicates to UI list
+
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        // Use encoded filename for data attribute to handle special characters
+        fileItem.setAttribute('data-filename', encodeURIComponent(filename));
+        fileItem.innerHTML = `
+            <span>${filename}</span>
+            <button class="remove-file" aria-label="Remove ${filename}" data-filename="${encodeURIComponent(filename)}">×</button>
+        `;
+        fileList.appendChild(fileItem);
+
+        // Add remove event listener (use event delegation later if needed, but this is fine for now)
+        fileItem.querySelector('.remove-file').addEventListener('click', (e) => {
+            const encodedFilename = e.target.getAttribute('data-filename');
+            removeFile(decodeURIComponent(encodedFilename), fileItem);
+        });
+    }
+
+    function removeFile(filename, element) {
+        try {
+            localStorage.removeItem(filename);
+            if (element) {
+                element.remove();
+            }
+
+            // Remove from state.categories
+            state.categories = state.categories.filter(cat => cat.filename !== filename);
+            renderCategories(); // Re-render categories
+
+            showNotification(`Removed ${filename}`);
+            console.log(`Removed ${filename} from localStorage and category list.`);
+
+            // If the currently loaded category was just removed, go back to selector
+            if (window.location.hash === `#category=${encodeURIComponent(filename)}`) {
+                backToCategories();
+            }
+        } catch (error) {
+            console.error(`Error removing file ${filename}:`, error);
+            showNotification(`Error removing ${filename}`);
+        }
+    }
+
+    // Load files listed in localStorage on startup
+    function loadExistingFiles() {
+        console.log("Loading existing files from localStorage...");
+        let loadedCount = 0;
+        const keysToRemove = []; // Store keys of invalid items to remove
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            // Only process .json files to avoid conflicts with other potential localStorage items
+            if (key && key.toLowerCase().endsWith('.json')) {
+                try {
+                    const storedData = localStorage.getItem(key);
+                    const data = JSON.parse(storedData);
+
+                    if (validateFlashcardData(data)) {
+                        // Add to state.categories if not already present (predefined might exist)
+                        if (!state.categories.some(cat => cat.filename === key)) {
+                            const categoryInfo = {
+                                name: data.title || key.replace('.json', ''),
+                                description: `${data.cards.length} cards (Uploaded)`,
+                                filename: key
+                            };
+                            state.categories.push(categoryInfo);
+                        }
+                        addFileToList(key); // Add to UI list
+                        loadedCount++;
+                    } else {
+                        console.warn(`Invalid flashcard data found in localStorage for key: ${key}. Removing.`);
+                        keysToRemove.push(key); // Mark for removal
+                    }
+                } catch (e) {
+                    console.error(`Error parsing localStorage item ${key}:`, e, ". Removing.");
+                    keysToRemove.push(key); // Mark for removal if parsing fails
+                }
+            }
+        }
+
+        // Clean up invalid items from localStorage
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        if (loadedCount > 0) {
+            console.log(`Loaded ${loadedCount} valid flashcard sets from localStorage.`);
+        }
+        if (keysToRemove.length > 0) {
+             console.log(`Removed ${keysToRemove.length} invalid items from localStorage.`);
+        }
+    }
+
+    // --- Utility Functions ---
+
+    function showNotification(message) {
+        notificationText.textContent = message;
+        notification.classList.add('show');
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // --- Event Listeners Setup ---
+
+    function setupEventListeners() {
+        // Card Controls
+        prevBtn.addEventListener('click', prevCard);
+        nextBtn.addEventListener('click', nextCard);
+        flipBtn.addEventListener('click', flipCard);
+        restartBtn.addEventListener('click', restartDeck);
+        backBtn.addEventListener('click', backToCategories);
+
+        // Click flashcard to flip
+        flashcard.addEventListener('click', flipCard);
+
+        // Keyboard Navigation (only when flashcards are visible)
+        document.addEventListener('keydown', (e) => {
+            // Check if flashcard view is active
+            if (flashcardContainer.style.display !== 'block' || loading.style.display === 'flex') {
+                return; // Don't process keys if not in flashcard view or loading
+            }
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    prevCard();
+                    e.preventDefault(); // Prevent browser back navigation
+                    break;
+                case 'ArrowRight':
+                    nextCard();
+                    e.preventDefault(); // Prevent default scrolling/focus change
+                    break;
+                case ' ': // Space bar
+                case 'Enter':
+                    flipCard();
+                    e.preventDefault(); // Prevent button activation or scrolling
+                    break;
+                case 'Escape':
+                     backToCategories(); // Allow Esc to go back
+                     e.preventDefault();
+                     break;
+            }
+        });
+
+        // File Upload Input
+        fileInput.addEventListener('change', handleFileUpload);
+
+        // Drag and Drop File Upload
+        const fileInputLabel = document.querySelector('.file-input-label');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false); // Prevent browser default drop behavior anywhere else
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, () => {
+                fileInputLabel.style.borderColor = 'var(--accent)';
+                fileInputLabel.style.backgroundColor = 'rgba(90, 59, 138, 0.6)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, () => {
+                fileInputLabel.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                fileInputLabel.style.backgroundColor = 'rgba(90, 59, 138, 0.4)';
+            }, false);
+        });
+
+        fileInputLabel.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            // Manually trigger the file handling logic with dropped files
+            handleFileUpload({ target: { files: files } });
+        }, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Listen for Hash Changes (Core Navigation)
+        window.addEventListener('hashchange', processHashChange);
+
+        // Listen for browser back/forward (redundant with hashchange but safe fallback)
+        window.addEventListener('popstate', processHashChange);
+
+        console.log("Event listeners set up.");
+    }
+
+    // --- App Start ---
+    document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
